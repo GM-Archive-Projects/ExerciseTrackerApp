@@ -1,17 +1,16 @@
-require('dotenv').config()
+require("dotenv").config();
 
-const express = require('express')
-const app = express()
+const express = require("express");
+const app = express();
 const morgan = require("morgan");
-const getDate = require("./utils/getCurrentDateTime");
-const bodyParser = require('body-parser')
+const bodyParser = require("body-parser");
 
 morgan.token("body", function (req, res) {
 	return JSON.stringify(req.body);
 });
 
 morgan.token("date", function (req, res) {
-	return getDate();
+	return new Date().toISOString().substring(0, 10);
 });
 
 //Morgan Middleware Function To Log Request Details
@@ -22,76 +21,118 @@ app.use(
 );
 // const bodyParser = require('body-parser')
 
-const cors = require('cors')
+const cors = require("cors");
 // app.use(express.json())
 const mongoose = require("mongoose");
-const { response } = require('express');
-let uri =`mongodb+srv://fullstack:${process.env.PW}@cluster0.wiesv.mongodb.net/${process.env.DBName}?retryWrites=true&w=majority`
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true },() => console.log(`Connecting to DB => ${process.env.DBName}`))
+const { response } = require("express");
+let uri = `mongodb+srv://fullstack:${process.env.PW}@cluster0.wiesv.mongodb.net/${process.env.DBName}?retryWrites=true&w=majority`;
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, () =>
+	console.log(`Connecting to DB => ${process.env.DBName}`)
+);
 
-app.use(cors())
+app.use(cors());
 
-app.use(express.static('public'))
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html')
-})
-
-
-
+app.use(express.static("public"));
+app.get("/", (req, res) => {
+	res.sendFile(__dirname + "/views/index.html");
+});
 
 const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log('Your app is listening on port ' + listener.address().port)
-})
-
-
-
+	console.log("Your app is listening on port " + listener.address().port);
+});
 
 const exerciseSessionSchema = new mongoose.Schema({
 	description: {
-        type: String,
-        minlength: 2,
-        required: true
+		type: String,
+		minlength: 2,
+		required: true,
 	},
 	duration: {
-        type: Number,
-        required: true
-    },
-    date: String
+		type: Number,
+		required: true,
+	},
+	date: String,
 });
 
 let userSchema = new mongoose.Schema({
-  username: {type: String, required: true},
-  log: [exerciseSessionSchema]
-})
+	username: { type: String, required: true },
+	log: [exerciseSessionSchema],
+});
 
-userSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    delete returnedObject.__v
-  }
-})
+userSchema.set("toJSON", {
+	transform: (document, returnedObject) => {
+		delete returnedObject.__v;
+	},
+});
 
-let Session = mongoose.model('Session' , exerciseSessionSchema)
-let User = mongoose.model('User', userSchema)
+let Session = mongoose.model("Session", exerciseSessionSchema);
+let User = mongoose.model("User", userSchema);
 
-app.post('/api/exercise/new-user', bodyParser.urlencoded({ extended: false }), (req, res) => {
-  let newUser = new User({username: req.body.username})
-  newUser.save((err, savedUser) => {
-    if(!err) {
-      let responseObject = {}
-      responseObject = {
-        _id : savedUser.id,
-        username: savedUser.username
+app.post(
+	"/api/exercise/new-user",
+	bodyParser.urlencoded({ extended: false }),
+	(req, res) => {
+		let newUser = new User({ username: req.body.username });
+		newUser.save((err, savedUser) => {
+			if (!err) {
+				let responseObject = {};
+				responseObject = {
+					_id: savedUser.id,
+					username: savedUser.username,
+				};
+				res.json(responseObject);
+			}
+		});
+	}
+);
+
+app.post(
+	"/api/exercise/add",
+	bodyParser.urlencoded({ extended: false }),
+	(req, res) => {
+		let newSession = new Session({
+			description: req.body.description,
+			duration: parseInt(req.body.duration),
+			date: req.body.date ? req.body.date : getDate(),
+		});
+		if (newSession.date === "") {
+			newSession.date = new Date().toISOString().substring(0, 10);
+		}
+		User.findByIdAndUpdate(
+			req.body.userId,
+			{ $push: { log: newSession } },
+			{ new: true },
+			(err, updatedUser) => {
+        let responseObject = {}
+        responseObject = {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          date: new Date(newSession.date).toDateString(),
+          description: newSession.description,
+          duration: newSession.duration
+        }
+        res.json(responseObject)
       }
-      res.json(responseObject)
-    }
-  })
-})
+		);
+	}
+);
 
-app.get('/api/exercise/users', (req, res) => {
+app.get("/api/exercise/users", (req, res) => {
+	User.find({}, (err, usersArr) => {
+		if (!err) {
+			res.json(usersArr);
+		}
+	});
+});
 
-  User.find({}, (err, usersArr) => {
-    if(!err) {
-      res.json(usersArr)
-    }
-  })
-})
+// (err, updatedUser) => {
+//   let responeObject = {}
+//     let responseObject = {
+//       _id: updatedUser.id,
+//       username: updatedUser.username,
+//       date: new Date(newSession.date).toDateString(),
+//       description: newSession.description,
+//       duration: newSession.duration,
+//     }
+//     res.json(responeObject)
+// })
