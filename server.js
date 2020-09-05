@@ -93,7 +93,7 @@ app.post(
 		let newSession = new Session({
 			description: req.body.description,
 			duration: parseInt(req.body.duration),
-			date: req.body.date ? req.body.date : getDate(),
+			date: req.body.date
 		});
 		if (newSession.date === "") {
 			newSession.date = new Date().toISOString().substring(0, 10);
@@ -103,16 +103,16 @@ app.post(
 			{ $push: { log: newSession } },
 			{ new: true },
 			(err, updatedUser) => {
-        let responseObject = {}
-        responseObject = {
-          _id: updatedUser.id,
-          username: updatedUser.username,
-          date: new Date(newSession.date).toDateString(),
-          description: newSession.description,
-          duration: newSession.duration
-        }
-        res.json(responseObject)
-      }
+				let responseObject = {};
+				responseObject = {
+					_id: updatedUser.id,
+					username: updatedUser.username,
+					date: new Date(newSession.date).toDateString(),
+					description: newSession.description,
+					duration: newSession.duration,
+				};
+				res.json(responseObject);
+			}
 		);
 	}
 );
@@ -125,14 +125,21 @@ app.get("/api/exercise/users", (req, res) => {
 	});
 });
 
-// (err, updatedUser) => {
-//   let responeObject = {}
-//     let responseObject = {
-//       _id: updatedUser.id,
-//       username: updatedUser.username,
-//       date: new Date(newSession.date).toDateString(),
-//       description: newSession.description,
-//       duration: newSession.duration,
+// app.get('/api/exercise/log', (req, res) => {
+//   User.findById(req.query.userId, (err, result) => {
+//     if(!err){
+//       result['count'] = result.log.length
+//       res.json(result)
 //     }
-//     res.json(responeObject)
+//   })
 // })
+
+app.get("/api/exercise/log", (req, res) => {
+  User.findById(req.query.userId, (err, result) => {
+    if(!err) {
+      let responseObject = result
+      responseObject['count'] = result.log.length
+      res.json(responseObject)
+    }
+  })
+});
