@@ -125,78 +125,48 @@ app.get("/api/exercise/users", (req, res) => {
 	});
 });
 
-// app.get('/api/exercise/log', (req, res) => {
-//   User.findById(req.query.userId, (err, result) => {
-//     if(!err){
-//       result['count'] = result.log.length
-//       res.json(result)
-//     }
-//   })
-// })
 
-
-
-
+app.use(express.json())
 app.get("/api/exercise/log", (req, res) => {
   User.findById(req.query.userId, (err, result) => {
     if(!err) {
       let responseObject = result
-      responseObject = responseObject.toJSON()
+      // responseObject = responseObject.toJSON()
+
       if(req.query.limit){
         responseObject.log = responseObject.log.slice(0, req.query.limit)
       }
+      
+      if(req.query.from || req.query.to) {
+
+        let fromDate = new Date(0)
+        let toDate = new Date()
+
+        if(req.query.from){
+          console.log(req.query.from)
+          fromDate = new Date(req.query.from)
+          console.log(fromDate)
+        }
+        if(req.query.to){
+          toDate = new Date(req.query.to)
+        }
+
+
+        fromDate = fromDate.getTime()
+        console.log(fromDate)
+
+        toDate = toDate.getTime()
+
+        responseObject.log = responseObject.log.filter((session) => {
+          let sesssionDate = new Date(session.date).getTime()
+
+          return sesssionDate>= fromDate && sesssionDate <= toDate
+        })
+      }
+      
+
       responseObject['count'] = result.log.length
       res.json(responseObject)
     }
   })
 });
-
-// app.get("/api/exercise/log", (req, res) => {
-//   User.findById(req.query.userId, (err, result) => {
-//     if(!err) {
-//       if(req.query.limit){
-//         responseObject.log = responseObject.log.slice(0, req.query.limit)
-//       }
-//       responseObject['count'] = result.log.length
-//       res.json(responseObject)
-//     }
-//   })
-// })
-
-
-
-// app.get("/api/exercise/log", (req, res) => {
-//   User.findById(req.query.userId, (err, result) => {
-//     if(!err) {
-//       let responseObject = result
-
-//       if(req.query.from || req.query.to){
-//         let fromDate = new Date(0)
-//         let toDate = new Date()
-        
-//         if(req.query.from) {
-//           fromDate = new Date(req.query.from)
-//         }
-
-//         if(req.query.to) {
-//           toDate = new Date(req.query.to)
-//         }
-//         fromDate = fromDate.getTime()
-//         toDate = toDate.getTime()
-
-//         responseObject.log = responseObject.log((session) => {
-//           let sessionDate = new Date(session.date).getTime()
-//           return sessionDate >= fromDate && sessionDate <= toDate
-//         })
-//       }
-
-//       if(req.query.limit){
-//         responseObject.log = responseObject.log.slice(0, req.query.limit)
-//       }
-
-//       responseObject = responseObject.toJSON()
-//       responseObject['count'] = result.log.length
-//       res.json(responseObject)
-//     }
-//   })
-// });
