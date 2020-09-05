@@ -1,50 +1,67 @@
+require('dotenv').config()
+
 const express = require('express')
 const app = express()
-const bodyParser = require('body-parser')
-require('dotenv').config()
+const morgan = require("morgan");
+const getDate = require("./utils/getCurrentDateTime");
+
+morgan.token("body", function (req, res) {
+	return JSON.stringify(req.body);
+});
+
+morgan.token("date", function (req, res) {
+	return getDate();
+});
+
+//Morgan Middleware Function To Log Request Details
+app.use(
+	morgan(
+		"Morgan Token =  :method :url :status :res[content-length] - :response-time ms :body :date"
+	)
+);
 
 const cors = require('cors')
 
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 let uri = `mongodb+srv://fullstack: + ${process.env.PW} @cluster0.wiesv.mongodb.net/${process.env.DBName}?retryWrites=true&w=majority`
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }); 
+mongoose.connect("Connecting To", uri, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.use(cors())
 
-app.use(bodyParser.urlencoded({extended: false}))
-app.use(bodyParser.json())
-
-
 app.use(express.static('public'))
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html')
-});
-
-
-// Not found middleware
-app.use((req, res, next) => {
-  return next({status: 404, message: 'not found'})
+  res.sendFile(__dirname + 'view/index.html')
 })
 
-// Error Handling middleware
-app.use((err, req, res, next) => {
-  let errCode, errMessage
 
-  if (err.errors) {
-    // mongoose validation error
-    errCode = 400 // bad request
-    const keys = Object.keys(err.errors)
-    // report the first validation error
-    errMessage = err.errors[keys[0]].message
-  } else {
-    // generic or custom error
-    errCode = err.status || 500
-    errMessage = err.message || 'Internal Server Error'
-  }
-  res.status(errCode).type('txt')
-    .send(errMessage)
-})
+app.get
+
+
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
+
+
+
+
+const exerciseSessionSchema = new mongoose.Schema({
+	description: {
+        type: String,
+        minlength: 2,
+        required: true
+	},
+	duration: {
+        type: Number,
+        required: true
+    },
+    date: String
+});
+
+let userSchema = new mongoose.Schema({
+  username: {type: String, required: true},
+  log: [exerciseSessionSchema]
+})
+
+let Session = mongoose.model('Session' , exerciseSessionSchema)
+let User = mongoose.model('User', userSchema)
