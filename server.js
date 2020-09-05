@@ -105,7 +105,7 @@ app.post(
 			(err, updatedUser) => {
         let responseObject = {}
         responseObject = {
-          id: updatedUser.id,
+          _id: updatedUser.id,
           username: updatedUser.username,
           date: new Date(newSession.date).toDateString(),
           description: newSession.description,
