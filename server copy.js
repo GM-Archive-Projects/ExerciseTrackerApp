@@ -4,6 +4,7 @@ const express = require('express')
 const app = express()
 const morgan = require("morgan");
 const getDate = require("./utils/getCurrentDateTime");
+
 morgan.token("body", function (req, res) {
 	return JSON.stringify(req.body);
 });
@@ -18,21 +19,22 @@ app.use(
 		"Morgan Token =  :method :url :status :res[content-length] - :response-time ms :body :date"
 	)
 );
-// const bodyParser = require('body-parser')
 
 const cors = require('cors')
 
 const mongoose = require("mongoose");
-let uri =`mongodb+srv://fullstack:${process.env.PW}@cluster0.wiesv.mongodb.net/${process.env.DBName}?retryWrites=true&w=majority`
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true },() => console.log(`Connecting to DB => ${process.env.DBName}`))
+let uri = `mongodb+srv://fullstack: + ${process.env.PW} @cluster0.wiesv.mongodb.net/${process.env.DBName}?retryWrites=true&w=majority`
+mongoose.connect("Connecting To", uri, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.use(cors())
 
 app.use(express.static('public'))
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html')
+  res.sendFile(__dirname + 'view/index.html')
 })
 
+
+app.get
 
 
 
